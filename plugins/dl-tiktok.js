@@ -1,54 +1,67 @@
-import 'api-dylux';
-import fetch from 'node-fetch';
-
-let handler = async (m, { conn, text, args, usedPrefix, command }) => {
-  if (!args[0]) {
-    throw `✳️ Give the link of the video TikTok or quote a TikTok link\n\n 📌 Example: ${usedPrefix + command} https://vm.tiktok.com`;
-  }
-  if (!args[0].match(/tiktok/gi)) {
-    throw "❎ Please provide a valid TikTok Link";
-  }
-
-  m.react(rwait);
-  
+const fetchTikTokData = async (url) => {
   try {
-    let response = await fetch(global.API("fgmods", '/api/downloader/tiktok', { 'url': args[0] }, "apikey"));
-    let result = await response.json();
-    
-    if (!result.result.images) {
-      let message = `
-┌─⊷ *XLICON 𝗧𝗜𝗞𝗧𝗢𝗞 𝗗𝗟* 
-┃ *Name:* ${result.result.author.nickname}
-┃ *Username:* ${result.result.author.unique_id}
-┃ *Duration:* ${result.result.duration}
-┃ *Likes:* ${result.result.digg_count}
-┃ *Views:* ${result.result.play_count}
-┃ *Description:* ${result.result.title}
-└───────────
-      `;
-      await conn.sendFile(m.chat, result.result.play, "tiktok.mp4", message, m);
-      m.react(done);
-    } else {
-      let message = `
-┌─⊷ *XLICON 𝗧𝗜𝗞𝗧𝗢𝗞 𝗗𝗟*           
-┃ *Likes:* ${result.result.digg_count}
-┃ *Description:* ${result.result.title}
-└───────────
-      `;
-      for (let image of result.result.images) {
-        await conn.sendMessage(m.chat, { image: { url: image }, caption: message }, { quoted: m });
-      }
-      await conn.sendFile(m.chat, result.result.play, "tiktok.mp3", '', m, null, { mimetype: "audio/mp4" });
-      m.react(done);
-    }
+    const response = await fetch(`https://api.yanzbotz.live/api/downloader/tiktok?url=${encodeURIComponent(url)}&apiKey=yanzdev`);
+    const data = await response.json();
+    return data.result;
   } catch (error) {
-    console.error(error);
-    m.reply("❎ Error");
+    console.error("Error", error);
+    throw error;
   }
 };
 
+let handler = async (messageContext, { conn, args, usedPrefix, command }) => {
+  const tikTokUrl = args[0];
+  if (!tikTokUrl) {
+    return messageContext.reply("*🟢Example*\n *.tiktok* paste your link");
+  }
+
+  messageContext.react("⏳");
+
+  try {
+    const tikTokData = await fetchTikTokData(tikTokUrl);
+    const mediaType = tikTokData.type;
+    let messageContent = "╭━━⊱𝗧𝗜𝗞𝗧𝗢𝗞 𝗗𝗟 \n";
+    messageContent += ` *Type:* ${mediaType}\n`;
+    messageContent += ` *Name:* ${tikTokData.name}\n`;
+    messageContent += ` *Username:* ${tikTokData.username}\n`;
+    messageContent += ` *Views:* ${tikTokData.views}\n`;
+    messageContent += ` *Likes:* ${tikTokData.likes}\n`;
+    messageContent += ` *Comments:* ${tikTokData.comments}\n`;
+    messageContent += ` *Favorites:* ${tikTokData.favorite}\n`;
+    messageContent += ` *Shares:* ${tikTokData.shares}\n`;
+    messageContent += ` *Description:* ${tikTokData.description}\n╰━━━━━━━━━━━━━━━━━`;
+
+    await conn.sendMessage(messageContext.chat, { text: `📥 *Media Type:* ${mediaType}` }, { quoted: messageContext });
+
+    if (mediaType === "image") {
+      const images = tikTokData.image;
+      await conn.sendMessage(messageContext.chat, { text: messageContent }, { quoted: messageContext });
+
+      for (let i = 0; i < images.length; i++) {
+        await conn.sendMessage(messageContext.chat, {
+          image: { url: images[i] },
+          caption: `* Image:* ${i + 1}`
+        }, { quoted: messageContext });
+      }
+      await conn.sendFile(messageContext.chat, tikTokData.sound, "tiktok.mp3", '', messageContext, null, { mimetype: "audio/mp4" });
+    }
+
+    if (mediaType === "video") {
+      const videoUrl = tikTokData.video["no-watermark"];
+      await conn.sendMessage(messageContext.chat, {
+        video: { url: videoUrl },
+        caption: messageContent
+      }, { quoted: messageContext });
+    }
+  } catch (error) {
+    messageContext.reply('' + mssg.error);
+  }
+
+  messageContext.react("✅");
+};
+
 handler.help = ["tiktok"];
-handler.tags = ['dl'];
-handler.command = ["tiktok", 'tt', "tiktokimg", 'tk'];
+handler.tags = ["tools"];
+handler.command = /^(tiktok|tt|tiktokdl|tiktokslide|tiktoknowm|tiktokvid|ttdl)$/i;
 
 export default handler;

@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 
 let handler = async (m, { text, conn, usedPrefix, command }) => {
   if (!text && !(m.quoted && m.quoted.text)) {
-    throw `Please provide some text or quote a message to get a response.`
+    throw  `Please provide some text or quote a message to get a response.`
   }
 
   if (!text && m.quoted && m.quoted.text) {
@@ -33,7 +33,7 @@ let handler = async (m, { text, conn, usedPrefix, command }) => {
 
       //const model = 'llama'
      // const senderNumber = m.sender.replace(/[^0-9]/g, '')
-      //const session = `xlicon_bot_${senderNumber}`
+      //const session = xlicon_bot_${senderNumber}
       const guru2 = `https://ultimetron.guruapi.tech/gpt3?prompt=${prompt}`
 
       let response = await fetch(guru2)
