@@ -38,7 +38,7 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "mohakobi79-xlicon-v2-m-1"
-          entrypoint: "index.js"
+          entrypoint: "main.ts"
           root: "./"
           
           
